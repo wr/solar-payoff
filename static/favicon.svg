@@ -5,13 +5,13 @@
       <stop offset="1" stop-color="#0a2842"/>
     </linearGradient>
     <radialGradient id="sun" cx="0.4" cy="0.36" r="0.75">
-      <stop offset="0" stop-color="#ffe9ad"/>
-      <stop offset="0.5" stop-color="#ffb733"/>
-      <stop offset="1" stop-color="#f5810f"/>
+      <stop offset="0" stop-color="#fff6d6"/>
+      <stop offset="0.5" stop-color="#ffd24d"/>
+      <stop offset="1" stop-color="#ff9c1e"/>
     </radialGradient>
   </defs>
   <rect width="32" height="32" rx="7" fill="url(#sky)"/>
-  <g stroke="#ffc033" stroke-width="2.6" stroke-linecap="round">
+  <g stroke="#ffc94f" stroke-width="2.6" stroke-linecap="round">
     <line x1="16" y1="2.5" x2="16" y2="6.5"/>
     <line x1="16" y1="25.5" x2="16" y2="29.5"/>
     <line x1="2.5" y1="16" x2="6.5" y2="16"/>
