@@ -55,7 +55,7 @@ body {
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 11px; }
-.sun-mark { width: 22px; height: 22px; display: block; filter: drop-shadow(0 0 5px rgba(255,170,50,0.5)); }
+.sun-mark { width: 22px; height: 22px; display: block; filter: drop-shadow(0 1px 2px rgba(150,70,0,0.45)); }
 .wordmark {
   font-family: "Fraunces", serif; font-weight: 600; font-size: 20px;
   letter-spacing: 0.01em; color: var(--text);
@@ -129,10 +129,10 @@ main { max-width: var(--maxw); margin: 0 auto; padding: clamp(20px, 4vw, 44px) c
   fill: none; stroke: url(#arcGrad); stroke-width: 16; stroke-linecap: round;
   filter: drop-shadow(0 4px 14px rgba(240,140,30,0.45));
 }
-.sun-core { fill: url(#sunGrad); filter: drop-shadow(0 0 5px rgba(255,150,40,0.9)); }
+.sun-core { fill: url(#sunGrad); filter: drop-shadow(0 1px 2px rgba(150,65,0,0.5)); }
 .sun-glow { fill: url(#sunGlow); animation: sunpulse 3.5s ease-in-out infinite; }
 .sun-rays { transform-box: fill-box; transform-origin: center; animation: sunspin 44s linear infinite; }
-.sun-rays line { stroke: #ffd351; stroke-width: 2.4; stroke-linecap: round; }
+.sun-rays line { stroke: #f5921a; stroke-width: 2.6; stroke-linecap: round; }
 @keyframes sunspin { to { transform: rotate(360deg); } }
 @keyframes sunpulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .sun-rays, .sun-glow { animation: none; } }
