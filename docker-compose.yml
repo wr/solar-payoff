@@ -1,0 +1,17 @@
+services:
+  solar-payoff:
+    build: .
+    container_name: solar-payoff
+    restart: unless-stopped
+    ports:
+      - "8088:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: America/New_York
+      # Public URL enables the one-click OAuth callback (vs manual code paste).
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      # Enphase app credentials — supplied via .env on the host, never in git.
+      ENPHASE_API_KEY: ${ENPHASE_API_KEY:-}
+      ENPHASE_CLIENT_ID: ${ENPHASE_CLIENT_ID:-}
+      ENPHASE_CLIENT_SECRET: ${ENPHASE_CLIENT_SECRET:-}

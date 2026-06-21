@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Solar Payoff</title>
+<meta name="color-scheme" content="light" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+<div class="sky"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="sun-mark" aria-hidden="true"></span>
+    <span class="wordmark">Solar&nbsp;Payoff</span>
+  </div>
+  <div class="topbar-actions">
+    <span class="sync-state" id="syncState">—</span>
+    <button class="btn ghost" id="refreshBtn" title="Sync Enphase now">
+      <span class="ic">⟳</span><span class="lbl">Sync</span>
+    </button>
+    <button class="btn ghost" id="settingsBtn" title="Settings">
+      <span class="ic">☰</span><span class="lbl">Setup</span>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- guided setup, shown until connected + configured -->
+  <section class="setup-banner" id="setupBanner" hidden>
+    <h2>Let's get this producing numbers.</h2>
+    <ol class="steps" id="setupSteps"></ol>
+  </section>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="gauge-wrap">
+      <svg id="gauge" viewBox="0 0 320 200" role="img" aria-label="Payoff progress">
+        <defs>
+          <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#ff6a1a" />
+            <stop offset="0.55" stop-color="#ffaa3c" />
+            <stop offset="1" stop-color="#ffe08a" />
+          </linearGradient>
+          <radialGradient id="sunGrad" cx="0.38" cy="0.36" r="0.72">
+            <stop offset="0" stop-color="#fffdf2" />
+            <stop offset="0.4" stop-color="#ffd751" />
+            <stop offset="1" stop-color="#ff8f12" />
+          </radialGradient>
+          <radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stop-color="#ffe07a" stop-opacity="0.85" />
+            <stop offset="0.5" stop-color="#ffc24d" stop-opacity="0.32" />
+            <stop offset="1" stop-color="#ffc24d" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+        <path id="arcTrack" class="arc-track" d="" />
+        <path id="arcFill" class="arc-fill" d="" />
+        <g id="sun" class="sun" transform="translate(20,170)">
+          <circle class="sun-glow" r="28" />
+          <g class="sun-rays" id="sunRays"></g>
+          <circle class="sun-core" r="11" />
+        </g>
+      </svg>
+      <div class="gauge-center">
+        <div class="pct" id="pctPaid">—</div>
+        <div class="pct-label">paid&nbsp;off</div>
+      </div>
+    </div>
+
+    <div class="hero-readout">
+      <div class="breakeven">
+        <span class="eyebrow">Projected breakeven</span>
+        <span class="be-date" id="breakevenDate">—</span>
+        <span class="be-sub" id="breakevenSub"></span>
+      </div>
+      <div class="hero-figures">
+        <div class="figure">
+          <span class="fig-label">Recovered</span>
+          <span class="fig-val pos" id="recovered">—</span>
+        </div>
+        <div class="figure">
+          <span class="fig-label">Remaining</span>
+          <span class="fig-val" id="remaining">—</span>
+        </div>
+        <div class="figure">
+          <span class="fig-label">Net cost</span>
+          <span class="fig-val" id="netCost">—</span>
+        </div>
+        <div class="figure">
+          <span class="fig-label">Payoff period</span>
+          <span class="fig-val" id="payoffPeriod">—</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAT STRIP -->
+  <section class="stats" id="stats"></section>
+
+  <!-- MAIN CHART -->
+  <section class="panel">
+    <div class="panel-head">
+      <h3>The climb to breakeven</h3>
+      <p class="panel-sub">Cumulative savings rising toward what the system cost. The dashed line is the projection at your recent pace.</p>
+    </div>
+    <div class="chart-box tall"><canvas id="climbChart"></canvas></div>
+  </section>
+
+  <!-- TWO-UP -->
+  <section class="grid-2">
+    <div class="panel">
+      <div class="panel-head"><h3>Monthly production</h3><p class="panel-sub">kWh generated</p></div>
+      <div class="chart-box"><canvas id="prodChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Bill: with vs. without solar</h3><p class="panel-sub">What you pay now vs. what you'd have paid</p></div>
+      <div class="chart-box"><canvas id="billChart"></canvas></div>
+    </div>
+  </section>
+
+  <section class="panel" id="warrantyPanel" hidden>
+    <div class="panel-head">
+      <h3>Warranty coverage</h3>
+      <p class="panel-sub">Years remaining from your switch-on date</p>
+    </div>
+    <div class="warranty-grid" id="warrantyGrid"></div>
+  </section>
+
+  <footer class="method" id="method"></footer>
+</main>
+
+<!-- SETTINGS DRAWER -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <h2>Setup</h2>
+    <button class="btn ghost icon" id="drawerClose" aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-body">
+
+    <div class="card-section">
+      <h4>System &amp; costs</h4>
+      <div class="field-grid">
+        <label>Total install cost
+          <div class="input-dollar"><span>$</span><input id="f_gross" type="number" inputmode="decimal" placeholder="0" /></div>
+        </label>
+        <label>Incentives &amp; tax credits
+          <div class="input-dollar"><span>$</span><input id="f_incentives" type="number" inputmode="decimal" placeholder="0" /></div>
+        </label>
+        <label class="net-readout">Net cost (after incentives)
+          <span id="f_net">$0</span>
+        </label>
+        <label>System switched on (PTO date)
+          <input id="f_switchon" type="date" />
+        </label>
+        <label>Fallback rate <span class="opt">only for months with no bill</span>
+          <div class="input-dollar"><span>$</span><input id="f_rate" type="number" step="0.01" inputmode="decimal" placeholder="0.22" /><em>/ kWh</em></div>
+          <small id="rateHint"></small>
+        </label>
+        <input id="f_export" type="hidden" />
+        <label>Warranty terms — years <span class="opt">panels · inverters · workmanship</span>
+          <div class="warranty-inputs">
+            <input id="f_wpanel" type="number" inputmode="numeric" placeholder="25" />
+            <input id="f_winv" type="number" inputmode="numeric" placeholder="25" />
+            <input id="f_wwork" type="number" inputmode="numeric" placeholder="25" />
+          </div>
+        </label>
+      </div>
+      <div class="metric-toggle">
+        <span>Payoff method</span>
+        <div class="seg" id="metricSeg">
+          <button data-metric="avoided_cost" class="on">Avoided cost</button>
+          <button data-metric="retail_value">Retail value</button>
+        </div>
+      </div>
+      <button class="btn primary" id="saveFinancials">Save</button>
+    </div>
+
+    <div class="card-section">
+      <h4>Enphase</h4>
+      <div id="enphaseStatus" class="status-line"></div>
+      <div id="enphaseConnect">
+        <p class="muted small">Click connect, authorize in the Enphase window, then paste the code it shows you.</p>
+        <button class="btn primary" id="enphaseAuthBtn">Connect Enphase →</button>
+        <div class="code-row" id="codeRow" hidden>
+          <input id="enphaseCode" placeholder="Paste authorization code" />
+          <button class="btn primary" id="enphaseLinkBtn">Link</button>
+        </div>
+      </div>
+      <details class="creds">
+        <summary>API credentials</summary>
+        <div class="field-grid">
+          <label>API Key<input id="c_key" placeholder="••••" /></label>
+          <label>Client ID<input id="c_id" placeholder="••••" /></label>
+          <label>Client Secret<input id="c_secret" placeholder="••••" /></label>
+          <label>System ID <span class="opt">optional</span><input id="c_sys" placeholder="auto-detected" /></label>
+        </div>
+        <button class="btn ghost" id="saveCreds">Save credentials</button>
+        <small class="muted">Already set via server env? Leave blank.</small>
+      </details>
+      <button class="btn ghost" id="syncNow2">Sync now</button>
+    </div>
+
+    <div class="card-section">
+      <h4>Eversource — Green Button</h4>
+      <p class="muted small">Download "Green Button / My Data" from Eversource and drop the file here (.zip, .xml, or .csv).</p>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="gbFile" accept=".zip,.xml,.csv" hidden />
+        <span id="dropLabel">Choose or drop a file</span>
+      </label>
+      <button class="btn primary" id="uploadBtn" disabled>Upload</button>
+      <div id="gbResult" class="status-line"></div>
+    </div>
+
+  </div>
+</aside>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="/static/chart.umd.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
