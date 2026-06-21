@@ -128,9 +128,9 @@ let gaugeRAF = null;
 function buildSunRays() {
   const g = $("#sunRays");
   if (!g || g.childElementCount) return;
-  const N = 12, NS = "http://www.w3.org/2000/svg";
+  const N = 8, NS = "http://www.w3.org/2000/svg";
   for (let i = 0; i < N; i++) {
-    const a = (i / N) * 2 * Math.PI, inner = 13, outer = (i % 2 === 0) ? 21 : 17;
+    const a = (i / N) * 2 * Math.PI, inner = 13, outer = 21;
     const l = document.createElementNS(NS, "line");
     l.setAttribute("x1", (Math.cos(a) * inner).toFixed(2));
     l.setAttribute("y1", (Math.sin(a) * inner).toFixed(2));
