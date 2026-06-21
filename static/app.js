@@ -116,8 +116,7 @@ function renderHero() {
     subEl.textContent = "Already paid off 🎉";
   } else if (h.breakeven_date) {
     beEl.textContent = monShort(h.breakeven_date);
-    const yrs = (new Date(h.breakeven_date) - Date.now()) / (365.25 * 864e5);
-    subEl.textContent = yrs > 0 ? `${yrs.toFixed(1)} years to go` : "soon";
+    subEl.textContent = "";
   } else {
     beEl.textContent = "—"; subEl.textContent = "Need production data to project";
   }
@@ -125,20 +124,7 @@ function renderHero() {
 
 const GA = { cx: 160, cy: 170, r: 140 };
 let gaugeRAF = null;
-function buildSunRays() {
-  const g = $("#sunRays");
-  if (!g || g.childElementCount) return;
-  const N = 8, NS = "http://www.w3.org/2000/svg";
-  for (let i = 0; i < N; i++) {
-    const a = (i / N) * 2 * Math.PI, inner = 13, outer = 21;
-    const l = document.createElementNS(NS, "line");
-    l.setAttribute("x1", (Math.cos(a) * inner).toFixed(2));
-    l.setAttribute("y1", (Math.sin(a) * inner).toFixed(2));
-    l.setAttribute("x2", (Math.cos(a) * outer).toFixed(2));
-    l.setAttribute("y2", (Math.sin(a) * outer).toFixed(2));
-    g.appendChild(l);
-  }
-}
+// the sun is static markup now (a bordered disc) — see #sun in index.html
 function setGauge(p) {
   const arcLen = Math.PI * GA.r;
   const fill = $("#arcFill");
@@ -149,7 +135,6 @@ function setGauge(p) {
   $("#sun").setAttribute("transform", `translate(${x.toFixed(2)},${y.toFixed(2)})`);
 }
 function drawGauge(target) {
-  buildSunRays();
   const dPath = `M ${GA.cx - GA.r} ${GA.cy} A ${GA.r} ${GA.r} 0 0 1 ${GA.cx + GA.r} ${GA.cy}`;
   $("#arcTrack").setAttribute("d", dPath);
   $("#arcFill").setAttribute("d", dPath);
