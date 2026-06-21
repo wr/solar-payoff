@@ -172,6 +172,29 @@
           </div>
         </label>
       </div>
+      <div class="metric-toggle" style="margin-top:14px;">
+        <span>Rate type</span>
+        <div class="seg" id="rateModeSeg">
+          <button data-mode="flat" class="on">Flat</button>
+          <button data-mode="tou">Time-of-use</button>
+        </div>
+      </div>
+      <div class="field-grid" id="touFields" hidden>
+        <label>On-peak rate
+          <div class="input-dollar"><span>$</span><input id="f_tou_on" type="number" step="0.01" inputmode="decimal" placeholder="0.32" /><em>/ kWh</em></div>
+        </label>
+        <label>Off-peak rate
+          <div class="input-dollar"><span>$</span><input id="f_tou_off" type="number" step="0.01" inputmode="decimal" placeholder="0.22" /><em>/ kWh</em></div>
+        </label>
+        <label>On-peak window
+          <div class="hours-row">
+            <input id="f_onpeak_start" type="number" min="0" max="23" placeholder="12" /><span class="to">to</span>
+            <input id="f_onpeak_end" type="number" min="1" max="24" placeholder="20" />
+            <select id="f_onpeak_days"><option value="weekdays">Mon–Fri</option><option value="all">Every day</option></select>
+          </div>
+          <small>Hour of day, 0–24. Used for TOU calibration.</small>
+        </label>
+      </div>
       <div class="metric-toggle">
         <span>Payoff method</span>
         <div class="seg" id="metricSeg">
@@ -180,6 +203,20 @@
         </div>
       </div>
       <button class="btn primary" id="saveFinancials">Save</button>
+    </div>
+
+    <div class="card-section">
+      <h4>Performance (PVWatts)</h4>
+      <p class="muted small">Compare your output to NREL's PVWatts model. Needs your location + roof array.</p>
+      <div class="field-grid">
+        <label>Latitude<input id="f_pv_lat" type="number" step="0.0001" placeholder="41.7" /></label>
+        <label>Longitude<input id="f_pv_lon" type="number" step="0.0001" placeholder="-72.6" /></label>
+        <label>Tilt <span class="opt">roof pitch, °</span><input id="f_pv_tilt" type="number" placeholder="30" /></label>
+        <label>Azimuth <span class="opt">facing, ° (180 = due south)</span><input id="f_pv_azimuth" type="number" placeholder="180" /></label>
+        <label>NLR API key <span class="opt">developer.nlr.gov; blank = DEMO_KEY</span><input id="f_nlr_key" placeholder="DEMO_KEY" /></label>
+      </div>
+      <button class="btn primary" id="pvwattsBtn">Save &amp; fetch PVWatts</button>
+      <div id="pvwattsResult" class="status-line"></div>
     </div>
 
     <div class="card-section">

@@ -14,6 +14,19 @@ FINANCIAL_DEFAULTS = {
     "panel_warranty_yr": "25",     # warranty terms (years from switch-on)
     "inverter_warranty_yr": "25",
     "workmanship_warranty_yr": "25",
+    # rate schedule used when a billing cycle has no statement-parsed rate
+    "rate_mode": "flat",           # flat | tou
+    "tou_on_rate": "",             # $/kWh on-peak (tou mode)
+    "tou_off_rate": "",            # $/kWh off-peak (tou mode)
+    "onpeak_start": "12",          # on-peak window start hour (0-23, local)
+    "onpeak_end": "20",            # on-peak window end hour (exclusive)
+    "onpeak_days": "weekdays",     # weekdays | all
+    # location + array for the PVWatts performance metric
+    "pv_lat": "",
+    "pv_lon": "",
+    "pv_tilt": "",
+    "pv_azimuth": "",
+    "nlr_api_key": "",             # developer.nlr.gov key (DEMO_KEY if blank)
 }
 
 

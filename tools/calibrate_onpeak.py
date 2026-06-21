@@ -2,6 +2,12 @@ import sys,json,time,datetime as dt
 sys.path.insert(0,"/app")
 from app import enphase, db
 sid=db.get_setting("enphase_system_id")
+# on-peak window from settings (configured in the dashboard); defaults 12-20 Mon-Fri
+def _i(k,d):
+    try: return int(db.get_setting(k) or d)
+    except (ValueError,TypeError): return d
+ON_START=_i("onpeak_start",12); ON_END=_i("onpeak_end",20)
+WEEKDAYS_ONLY=(db.get_setting("onpeak_days") or "weekdays")!="all"
 today=dt.date.today()
 on={}; off={}; cnt={}
 day=today - dt.timedelta(days=365)
@@ -21,7 +27,8 @@ with open("/tmp/calib.log","w") as log:
             for itv in r.get("intervals",[]):
                 t=dt.datetime.fromtimestamp(itv["end_at"])
                 wh=itv.get("enwh",0) or 0
-                if 12<=t.hour<20 and t.weekday()<5: on[t.month]=on.get(t.month,0)+wh
+                onpk=(ON_START<=t.hour<ON_END) and (t.weekday()<5 or not WEEKDAYS_ONLY)
+                if onpk: on[t.month]=on.get(t.month,0)+wh
                 else: off[t.month]=off.get(t.month,0)+wh
             cnt[day.month]=cnt.get(day.month,0)+1
         i+=1

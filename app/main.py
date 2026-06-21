@@ -2,6 +2,7 @@
 import os
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -35,6 +36,17 @@ class FinancialsIn(BaseModel):
     panel_warranty_yr: str | None = None
     inverter_warranty_yr: str | None = None
     workmanship_warranty_yr: str | None = None
+    rate_mode: str | None = None
+    tou_on_rate: str | None = None
+    tou_off_rate: str | None = None
+    onpeak_start: str | None = None
+    onpeak_end: str | None = None
+    onpeak_days: str | None = None
+    pv_lat: str | None = None
+    pv_lon: str | None = None
+    pv_tilt: str | None = None
+    pv_azimuth: str | None = None
+    nlr_api_key: str | None = None
 
 
 class CredsIn(BaseModel):
@@ -168,6 +180,36 @@ async def greenbutton_upload(file: UploadFile = File(...)):
 @app.get("/api/payoff")
 def get_payoff():
     return payoff.compute()
+
+
+@app.post("/api/pvwatts/fetch")
+def pvwatts_fetch():
+    """Fetch expected annual production from PVWatts for the Performance metric."""
+    f = config.get_financials()
+
+    def num(x):
+        try:
+            return float(x)
+        except (ValueError, TypeError):
+            return None
+    lat, lon = num(f.get("pv_lat")), num(f.get("pv_lon"))
+    tilt, az = num(f.get("pv_tilt")), num(f.get("pv_azimuth"))
+    size_w = num(db.get_setting("enphase_size_w"))
+    if lat is None or lon is None or tilt is None or az is None or not size_w:
+        raise HTTPException(400, "Set location (lat/lon), tilt, azimuth, and connect Enphase (for system size) first.")
+    params = {"api_key": f.get("nlr_api_key") or "DEMO_KEY", "lat": lat, "lon": lon,
+              "system_capacity": size_w / 1000, "azimuth": az, "tilt": tilt,
+              "array_type": 1, "module_type": 0, "losses": 14}
+    try:
+        # NREL renamed to NLR; developer.nrel.gov retired 2026-05-29.
+        d = httpx.get("https://developer.nlr.gov/api/pvwatts/v8.json", params=params, timeout=30).json()
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(502, f"PVWatts request failed: {e}")
+    if d.get("errors"):
+        raise HTTPException(400, "; ".join(d["errors"]))
+    ann = round(d["outputs"]["ac_annual"])
+    db.set_settings({"pv_expected_annual_kwh": str(ann)})
+    return {"ok": True, "expected_annual_kwh": ann}
 
 
 # ---- static SPA -----------------------------------------------------------

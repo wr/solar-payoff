@@ -341,6 +341,19 @@ function populateSettings() {
   $("#f_wpanel").value = f.panel_warranty_yr || "";
   $("#f_winv").value = f.inverter_warranty_yr || "";
   $("#f_wwork").value = f.workmanship_warranty_yr || "";
+  const rm = f.rate_mode || "flat";
+  document.querySelectorAll("#rateModeSeg button").forEach((b) => b.classList.toggle("on", b.dataset.mode === rm));
+  $("#touFields").hidden = rm !== "tou";
+  $("#f_tou_on").value = f.tou_on_rate || "";
+  $("#f_tou_off").value = f.tou_off_rate || "";
+  $("#f_onpeak_start").value = f.onpeak_start || "";
+  $("#f_onpeak_end").value = f.onpeak_end || "";
+  $("#f_onpeak_days").value = f.onpeak_days || "weekdays";
+  $("#f_pv_lat").value = f.pv_lat || "";
+  $("#f_pv_lon").value = f.pv_lon || "";
+  $("#f_pv_tilt").value = f.pv_tilt || "";
+  $("#f_pv_azimuth").value = f.pv_azimuth || "";
+  $("#f_nlr_key").value = f.nlr_api_key || "";
   updateNet();
   document.querySelectorAll("#metricSeg button").forEach((b) =>
     b.classList.toggle("on", b.dataset.metric === (f.payoff_metric || "avoided_cost")));
@@ -385,12 +398,37 @@ async function saveFinancials() {
     panel_warranty_yr: $("#f_wpanel").value || "25",
     inverter_warranty_yr: $("#f_winv").value || "25",
     workmanship_warranty_yr: $("#f_wwork").value || "25",
+    rate_mode: document.querySelector("#rateModeSeg button.on").dataset.mode,
+    tou_on_rate: $("#f_tou_on").value || "",
+    tou_off_rate: $("#f_tou_off").value || "",
+    onpeak_start: $("#f_onpeak_start").value || "12",
+    onpeak_end: $("#f_onpeak_end").value || "20",
+    onpeak_days: $("#f_onpeak_days").value || "weekdays",
+    pv_lat: $("#f_pv_lat").value || "",
+    pv_lon: $("#f_pv_lon").value || "",
+    pv_tilt: $("#f_pv_tilt").value || "",
+    pv_azimuth: $("#f_pv_azimuth").value || "",
+    nlr_api_key: $("#f_nlr_key").value || "",
   };
   try {
     await api("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     toast("Saved");
     await loadAll();
   } catch (e) { toast("Save failed: " + e.message, "bad"); }
+}
+
+async function fetchPvwatts(btn) {
+  const orig = btn.textContent; btn.disabled = true; btn.textContent = "Fetching…";
+  try {
+    await saveFinancials();   // persist location/array first (also reloads)
+    const r = await api("/api/pvwatts/fetch", { method: "POST" });
+    $("#pvwattsResult").innerHTML = `<span class="ok">✓ Expected ${num(r.expected_annual_kwh)} kWh/yr</span> — Performance card updated.`;
+    toast("PVWatts updated");
+    await loadAll();
+  } catch (e) {
+    $("#pvwattsResult").innerHTML = `<span class="bad">${e.message}</span>`;
+    toast("PVWatts failed: " + e.message, "bad");
+  } finally { btn.disabled = false; btn.textContent = orig; }
 }
 
 async function saveCreds() {
@@ -478,6 +516,13 @@ function wire() {
       document.querySelectorAll("#metricSeg button").forEach((x) => x.classList.remove("on"));
       b.classList.add("on");
     }));
+  document.querySelectorAll("#rateModeSeg button").forEach((b) =>
+    b.addEventListener("click", () => {
+      document.querySelectorAll("#rateModeSeg button").forEach((x) => x.classList.remove("on"));
+      b.classList.add("on");
+      $("#touFields").hidden = b.dataset.mode !== "tou";
+    }));
+  $("#pvwattsBtn").addEventListener("click", (e) => fetchPvwatts(e.currentTarget));
 
   // file input + drag/drop
   const dz = $("#dropzone");

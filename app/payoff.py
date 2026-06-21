@@ -33,14 +33,19 @@ def _avg(xs):
     return sum(xs) / len(xs) if xs else None
 
 
-def _build_tou_model(util, fallback_rate, onpeak_by_month=None):
+def _build_tou_model(util, fallback_rate, onpeak_by_month=None, default_on=None, default_off=None):
     """Return (eff_for_date, cycles, stats). eff_for_date(d) -> production-value
     $/kWh for the cycle containing d (TOU-weighted), with seasonal fallback.
 
     onpeak_by_month: {month: fraction} measured from Enphase 15-min interval data
-    (production in the 12pm-8pm Mon-Fri window). When present it overrides the
-    export-timing proxy."""
+    (production in the on-peak window). When present it overrides the export-timing
+    proxy. default_on/default_off: per-peak fallback $/kWh from the user's
+    configured rate schedule (used when a cycle has no statement-parsed rate)."""
     onpeak_by_month = onpeak_by_month or {}
+    if default_on is None:
+        default_on = fallback_rate
+    if default_off is None:
+        default_off = fallback_rate
     cycles = []
     prev = None
     for r in util:
@@ -75,8 +80,8 @@ def _build_tou_model(util, fallback_rate, onpeak_by_month=None):
         f = onpeak_by_month.get(str(mo))
         if f is None:
             f = comp(c["frac"], mon_frac, mo, ov_frac, 0.4)
-        ron = comp(c["rate_on"], mon_on, mo, ov_on, fallback_rate)
-        roff = comp(c["rate_off"], mon_off, mo, ov_off, fallback_rate)
+        ron = comp(c["rate_on"], mon_on, mo, ov_on, default_on)
+        roff = comp(c["rate_off"], mon_off, mo, ov_off, default_off)
         return f * ron + (1 - f) * roff
 
     for c in cycles:
@@ -123,7 +128,20 @@ def compute():
         onpeak_by_month = json.loads(db.get_setting("onpeak_frac_by_month", "{}") or "{}")
     except (ValueError, TypeError):
         onpeak_by_month = {}
-    eff_for_date, cycles, rstats = _build_tou_model(util, fallback_rate, onpeak_by_month)
+    _fin = config.get_financials()
+
+    def _fnum(x):
+        try:
+            return float(x)
+        except (ValueError, TypeError):
+            return None
+    if _fin.get("rate_mode") == "tou":
+        default_on = _fnum(_fin.get("tou_on_rate")) or fallback_rate
+        default_off = _fnum(_fin.get("tou_off_rate")) or fallback_rate
+    else:
+        default_on = default_off = fallback_rate
+    eff_for_date, cycles, rstats = _build_tou_model(
+        util, fallback_rate, onpeak_by_month, default_on, default_off)
 
     daily = []
     monthly = defaultdict(lambda: {"production_kwh": 0.0, "consumption_kwh": 0.0,
